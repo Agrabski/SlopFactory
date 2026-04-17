@@ -1,4 +1,6 @@
 using System.ComponentModel;
+namespace SlopFactory.Tools;
+
 public class GitTool(RepoContext context)
 {
 	private readonly ShellTool _shell = new(context);

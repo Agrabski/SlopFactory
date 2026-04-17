@@ -1,17 +1,14 @@
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
-public class GitHubAppClientFactory
-{
-	private readonly string _appId;
-	private readonly string _privateKeyPem;
+namespace SlopFactory.Tools;
 
-	public GitHubAppClientFactory(string appId, string privateKeyPem)
-	{
-		_appId = appId;
-		_privateKeyPem = privateKeyPem;
-	}
+public class GitHubAppClientFactory(IOptions<GitHubAppOptions> options)
+{
+	private readonly string _appId = options.Value.AppId;
+	private readonly string _privateKeyPem = options.Value.PrivateKeyPem;
 
 	public async Task<GitHubClient> CreateClient(long installationId)
 	{

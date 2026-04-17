@@ -1,4 +1,6 @@
 using System.ComponentModel;
+namespace SlopFactory.Tools;
+
 public class FileTool(RepoContext context)
 {
 

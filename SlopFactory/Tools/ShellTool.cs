@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+namespace SlopFactory.Tools;
 
 public class ShellTool(RepoContext context)
 {

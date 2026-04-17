@@ -1,3 +1,5 @@
+namespace SlopFactory.Tools;
+
 public class RepoContext
 {
 	public string RepoPath { get; init; } = "/agent/workspace/repo";

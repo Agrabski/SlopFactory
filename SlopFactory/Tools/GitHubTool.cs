@@ -1,5 +1,7 @@
 using Octokit;
 using System.ComponentModel;
+namespace SlopFactory.Tools;
+
 public class GitHubTool(GitHubClient client, RepoContext context)
 {
 

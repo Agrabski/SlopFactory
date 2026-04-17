@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-namespace SlopFactory;
+namespace SlopFactory.Services;
 
 public class SlopService(IOptions<SlopServiceOptions> options) : IHostedService
 {
