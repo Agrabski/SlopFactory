@@ -37,7 +37,11 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-        
+    
+    - name: Build base image
+      run: docker build -t ghcr.io/agrabski/dev-image:latest -f Dockerfile.base .
+    - name: push base image
+      run: docker push ghcr.io/agrabski/dev-image:latest
     - name: Build and publish container image
       run: dotnet publish --os linux /t:PublishContainer --self-contained true -c Release /p:ContainerImageTag=latest
 

@@ -6,6 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ContainerRegistry>ghcr.io</ContainerRegistry>
 		<ContainerRepository>agrabski/slopfactory</ContainerRepository>
+		<ContainerBaseImage>ghcr.io/agrabski/dev-image</ContainerBaseImage>
 	</PropertyGroup>
 
 	<ItemGroup>
