@@ -52,8 +52,10 @@ public class CodingAgentService(
 
 		var prompt = BuildIssuePrompt(issue, repoContext, branchName, relativeIssueDirectory);
 		logger.LogInformation("Running coding agent for issue #{IssueNumber}.", issue.Number);
+		logger.LogDebug("Agent prompt: {Prompt}", prompt);
 
 		var response = await agent.RunAsync(prompt, cancellationToken: cancellationToken);
+		logger.LogDebug("Agent response: {Response}", response.Text);
 		return response.Text;
 
 		Task<string> PushConfigured(string branch)
