@@ -115,7 +115,7 @@ public class SlopService(
 				var psi = new ProcessStartInfo
 				{
 					FileName = "/bin/bash",
-					ArgumentList = {"-c", $"git clone --depth 1 --branch {branchName} {cloneUrl} {repoPathRoot}" },
+					ArgumentList = {"-c", $"git clone --depth 1 --branch {options.DefaultBranch} {cloneUrl} {repoPathRoot}" },
 					RedirectStandardOutput = true,
 					RedirectStandardError = true,
 					WorkingDirectory = parent
