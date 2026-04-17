@@ -104,7 +104,7 @@ public class SlopService(
 		var cloneToken = client?.Credentials?.GetToken();
 		var cloneUrl = string.IsNullOrWhiteSpace(cloneToken)
 			? $"https://github.com/{repoContext.Owner}/{repoContext.Repo}.git"
-			: $"https://{cloneToken}@github.com/{repoContext.Owner}/{repoContext.Repo}.git";
+			: $"https://x-access-token:{cloneToken}@github.com/{repoContext.Owner}/{repoContext.Repo}.git";
 
 		if (!Directory.Exists(issueDir) || !Directory.Exists(Path.Combine(issueDir, ".git")))
 		{
