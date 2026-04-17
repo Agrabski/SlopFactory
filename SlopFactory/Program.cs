@@ -9,8 +9,8 @@ builder.Services.AddOptions<GithubOptions>()
 builder.Services.AddOptions<GitHubAppOptions>()
 	.Bind(builder.Configuration.GetSection("GitHubApp"));
 
-builder.Services.AddSingleton<GitHubAppClientFactory>();
-builder.Services.AddSingleton<GithubToolFactory>();
+builder.Services.AddSingleton<IGitHubAppClientFactory, GitHubAppClientFactory>();
+builder.Services.AddSingleton<IGithubToolFactory, GithubToolFactory>();
 builder.Services.AddHostedService<SlopService>();
 
 var app = builder.Build();

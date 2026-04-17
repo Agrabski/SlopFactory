@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 namespace SlopFactory.Tools;
 
-public class GithubToolFactory(GitHubAppClientFactory clientFactory, IOptions<GithubOptions> options)
+public class GithubToolFactory(IGitHubAppClientFactory clientFactory, IOptions<GithubOptions> options) : IGithubToolFactory
 {
 	public async Task<GitHubTool> CreateClient(RepoContext context)
 	{

@@ -5,7 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 namespace SlopFactory.Tools;
 
-public class GitHubAppClientFactory(IOptions<GitHubAppOptions> options)
+public class GitHubAppClientFactory(IOptions<GitHubAppOptions> options) : IGitHubAppClientFactory
 {
 	private readonly string _appId = options.Value.AppId;
 	private readonly string _privateKeyPem = options.Value.PrivateKeyPem;
