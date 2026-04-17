@@ -1,5 +1,5 @@
 # Use a Debian base image as a robust foundation
-FROM debian:bookworm-slim
+FROM ubuntu:latest
 
 # Set environment variables for non-interactive installation
 ENV DEBIAN_FRONTEND=noninteractive
