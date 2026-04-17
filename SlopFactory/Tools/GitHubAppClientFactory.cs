@@ -8,13 +8,22 @@ namespace SlopFactory.Tools;
 
 using System.IO;
 
-public class GitHubAppClientFactory(
+public sealed class GitHubAppClientFactory(
 	IOptions<GitHubAppOptions> appOptions,
-	IOptions<GithubOptions> githubOptions) : IGitHubAppClientFactory
+	IOptions<GithubOptions> githubOptions) : IGitHubAppClientFactory, IDisposable
 {
 	private readonly string _appId = appOptions.Value.AppId;
 	private readonly string _privateKeyPemFile = appOptions.Value.PrivateKeyPemFile;
 	private readonly long _installationId = githubOptions.Value.InstallationId;
+	private readonly RSA _rsa = CreateRsa(appOptions.Value);
+	
+	private static RSA CreateRsa(GitHubAppOptions githubOptionsValue)
+	{
+		var privateKeyPem = File.ReadAllText(githubOptionsValue.PrivateKeyPemFile);
+		var rsa = RSA.Create();
+		rsa.ImportFromPem(privateKeyPem.ToCharArray());
+		return rsa;
+	}
 
 	public async Task<GitHubClient> CreateClient()
 	{
@@ -38,35 +47,33 @@ public class GitHubAppClientFactory(
 
 	private string CreateJwt()
 	{
-		var privateKeyPem = File.ReadAllText(_privateKeyPemFile);
-		using (var rsa = RSA.Create())
+		var securityKey = new RsaSecurityKey(_rsa);
+		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
+
+		var now = DateTimeOffset.UtcNow;
+		var iat = now.ToUnixTimeSeconds();
+		var exp = now.AddMinutes(10).ToUnixTimeSeconds();
+
+		// Prefer a numeric iss when possible per GitHub's expectations.
+		object issValue = _appId;
+		if (long.TryParse(_appId, out var parsed))
 		{
-			rsa.ImportFromPem(privateKeyPem.ToCharArray());
-
-			var securityKey = new RsaSecurityKey(rsa);
-			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
-
-			var now = DateTimeOffset.UtcNow;
-			var iat = now.ToUnixTimeSeconds();
-			var exp = now.AddMinutes(10).ToUnixTimeSeconds();
-
-			// Prefer a numeric iss when possible per GitHub's expectations.
-			object issValue = _appId;
-			if (long.TryParse(_appId, out var parsed))
-			{
-				issValue = parsed;
-			}
-
-			var header = new JwtHeader(credentials);
-			var payload = new JwtPayload
-			{
-				{ "iat", iat },
-				{ "exp", exp },
-				{ "iss", issValue }
-			};
-
-			var token = new JwtSecurityToken(header, payload);
-			return new JwtSecurityTokenHandler().WriteToken(token);
+			issValue = parsed;
 		}
+
+		var header = new JwtHeader(credentials);
+		var payload = new JwtPayload
+		{
+			{ "iat", iat },
+			{ "exp", exp },
+			{ "iss", issValue }
+		};
+
+		var token = new JwtSecurityToken(header, payload);
+		return new JwtSecurityTokenHandler().WriteToken(token);
+	}
+	public void Dispose()
+	{
+		_rsa.Dispose();
 	}
 }
