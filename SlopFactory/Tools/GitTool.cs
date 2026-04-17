@@ -2,7 +2,7 @@ using Microsoft.Extensions.AI;
 using System.ComponentModel;
 namespace SlopFactory.Tools;
 
-public class GitTool(RepoContext context) : IAIToolbox
+public class GitTool(RepoContext context, string token) : IAIToolbox
 {
 	private readonly ShellTool _shell = new(context);
 
@@ -18,10 +18,10 @@ public class GitTool(RepoContext context) : IAIToolbox
 
 	[Description("Push the current branch to the remote repository.")]
 	public async Task<string> Push(
-		[Description("Branch name to push.")] string branch,
-		[Description("GitHub token for authentication.")] string token)
+		[Description("Branch name to push.")] string branch
+		)
 	{
-		var remote = $"https://{token}@github.com/{context.Owner}/{context.Repo}.git";
+		var remote = $"https://x-access-token:{token}@github.com/{context.Owner}/{context.Repo}.git";
 		return await _shell.Run($"git push {remote} {branch}");
 	}
 
