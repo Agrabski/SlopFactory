@@ -18,7 +18,11 @@ public class FileTool(RepoContext context) : IAIToolbox
 	[Description("Read a file from the repository.")]
 	public string Read(
 		[Description("Path relative to the repository root.")] string path)
-		=> File.ReadAllText(Resolve(path));
+	{
+		if (!File.Exists(Resolve(path)))
+			return string.Empty;
+		return File.ReadAllText(Resolve(path));
+	}
 
 	[Description("Write a file inside the repository.")]
 	public void Write(
