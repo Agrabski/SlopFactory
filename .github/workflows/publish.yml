@@ -39,7 +39,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Build base image
-      run: docker build -t ghcr.io/agrabski/dev-image:latest -f Dockerfile.base .
+      run: docker build -t ghcr.io/agrabski/dev-image:latest -f .
     - name: push base image
       run: docker push ghcr.io/agrabski/dev-image:latest
     - name: Build and publish container image
