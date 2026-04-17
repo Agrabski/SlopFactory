@@ -57,12 +57,20 @@ public class CodingAgentService(
 
 		Task<string> PushConfigured(string branch)
 		{
-			if (string.IsNullOrWhiteSpace(serviceOptions.GithubToken))
+			// Prefer the GitHub App installation token from the provided GitHub client when available.
+			var pushToken = serviceOptions.GithubToken;
+			if (githubClient?.Credentials != null)
+			{
+				// Octokit stores the token in the Credentials.Token property when created with a token.
+				pushToken = githubClient.Credentials.Token ?? pushToken;
+			}
+
+			if (string.IsNullOrWhiteSpace(pushToken))
 			{
 				return Task.FromResult("Push skipped: GitHub token is not configured.");
 			}
 
-			return gitTool.Push(branch, serviceOptions.GithubToken);
+			return gitTool.Push(branch, pushToken);
 		}
 
 		async Task<string> AskIssueQuestion(string question)
