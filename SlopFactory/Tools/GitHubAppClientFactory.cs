@@ -39,32 +39,34 @@ public class GitHubAppClientFactory(
 	private string CreateJwt()
 	{
 		var privateKeyPem = File.ReadAllText(_privateKeyPemFile);
-		using var rsa = RSA.Create();
-		rsa.ImportFromPem(privateKeyPem.ToCharArray());
-
-		var securityKey = new RsaSecurityKey(rsa);
-		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
-
-		var now = DateTimeOffset.UtcNow;
-		var iat = now.ToUnixTimeSeconds();
-		var exp = now.AddMinutes(10).ToUnixTimeSeconds();
-
-		// Prefer a numeric iss when possible per GitHub's expectations.
-		object issValue = _appId;
-		if (long.TryParse(_appId, out var parsed))
+		using (var rsa = RSA.Create())
 		{
-			issValue = parsed;
+			rsa.ImportFromPem(privateKeyPem.ToCharArray());
+
+			var securityKey = new RsaSecurityKey(rsa);
+			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
+
+			var now = DateTimeOffset.UtcNow;
+			var iat = now.ToUnixTimeSeconds();
+			var exp = now.AddMinutes(10).ToUnixTimeSeconds();
+
+			// Prefer a numeric iss when possible per GitHub's expectations.
+			object issValue = _appId;
+			if (long.TryParse(_appId, out var parsed))
+			{
+				issValue = parsed;
+			}
+
+			var header = new JwtHeader(credentials);
+			var payload = new JwtPayload
+			{
+				{ "iat", iat },
+				{ "exp", exp },
+				{ "iss", issValue }
+			};
+
+			var token = new JwtSecurityToken(header, payload);
+			return new JwtSecurityTokenHandler().WriteToken(token);
 		}
-
-		var header = new JwtHeader(credentials);
-		var payload = new JwtPayload
-		{
-			{ "iat", iat },
-			{ "exp", exp },
-			{ "iss", issValue }
-		};
-
-		var token = new JwtSecurityToken(header, payload);
-		return new JwtSecurityTokenHandler().WriteToken(token);
 	}
 }
