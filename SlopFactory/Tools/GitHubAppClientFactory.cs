@@ -5,12 +5,15 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 namespace SlopFactory.Tools;
 
-public class GitHubAppClientFactory(IOptions<GitHubAppOptions> options) : IGitHubAppClientFactory
+public class GitHubAppClientFactory(
+	IOptions<GitHubAppOptions> appOptions,
+	IOptions<GithubOptions> githubOptions) : IGitHubAppClientFactory
 {
-	private readonly string _appId = options.Value.AppId;
-	private readonly string _privateKeyPem = options.Value.PrivateKeyPem;
+	private readonly string _appId = appOptions.Value.AppId;
+	private readonly string _privateKeyPem = appOptions.Value.PrivateKeyPem;
+	private readonly long _installationId = githubOptions.Value.InstallationId;
 
-	public async Task<GitHubClient> CreateClient(long installationId)
+	public async Task<GitHubClient> CreateClient()
 	{
 		var jwt = CreateJwt();
 
@@ -21,7 +24,7 @@ public class GitHubAppClientFactory(IOptions<GitHubAppOptions> options) : IGitHu
 		};
 
 		// Step 2: exchange for installation token
-		var response = await appClient.GitHubApps.CreateInstallationToken(installationId);
+		var response = await appClient.GitHubApps.CreateInstallationToken(_installationId);
 
 		// Step 3: return authenticated client
 		return new GitHubClient(new ProductHeaderValue("coding-agent"))

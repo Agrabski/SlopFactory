@@ -11,6 +11,7 @@ builder.Services.AddOptions<GitHubAppOptions>()
 
 builder.Services.AddSingleton<IGitHubAppClientFactory, GitHubAppClientFactory>();
 builder.Services.AddSingleton<IGithubToolFactory, GithubToolFactory>();
+builder.Services.AddSingleton<IIssueSelectionService, IssueSelectionService>();
 builder.Services.AddHostedService<SlopService>();
 
 var app = builder.Build();

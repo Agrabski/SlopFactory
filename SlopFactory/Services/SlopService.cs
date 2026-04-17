@@ -1,16 +1,157 @@
 using Microsoft.Extensions.Options;
+using Octokit;
+using SlopFactory.Tools;
+using System.Text.Json;
 namespace SlopFactory.Services;
 
-public class SlopService(IOptions<SlopServiceOptions> options) : IHostedService
+public class SlopService(
+	IOptionsMonitor<SlopServiceOptions> options,
+	IGitHubAppClientFactory gitHubAppClientFactory,
+	IGithubToolFactory githubToolFactory,
+	IIssueSelectionService issueSelectionService,
+	ILogger<SlopService> logger) : BackgroundService
 {
+	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+	{
+		logger.LogInformation("Starting SlopService issue polling worker.");
 
-	public Task StartAsync(CancellationToken cancellationToken)
-	{
-		throw new NotImplementedException();
+		try
+		{
+			while (!cancellationToken.IsCancellationRequested)
+			{
+				try
+				{
+					await PollGithubAsync(cancellationToken);
+				}
+				catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+				{
+					break;
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Unhandled error while polling GitHub issues.");
+				}
+
+				var interval = NormalizePollInterval(options.CurrentValue.PollInterval);
+
+				try
+				{
+					await Task.Delay(interval, cancellationToken);
+				}
+				catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+				{
+					break;
+				}
+			}
+		}
+		finally
+		{
+			logger.LogInformation("Stopping SlopService issue polling worker.");
+		}
 	}
-	public Task StopAsync(CancellationToken cancellationToken)
+
+	private async Task PollGithubAsync(CancellationToken cancellationToken)
 	{
-		throw new NotImplementedException();
+		var slopOptions = options.CurrentValue;
+		var selectedIssues = await issueSelectionService.SelectIssuesToStartAsync(cancellationToken);
+		if (selectedIssues.Count == 0)
+		{
+			return;
+		}
+
+		var client = await gitHubAppClientFactory.CreateClient();
+		foreach (var selectedIssue in selectedIssues)
+		{
+			try
+			{
+				await StartIssueWorkAsync(
+					client,
+					selectedIssue.Issue,
+					selectedIssue.IssueDirectory,
+					selectedIssue.RelativeIssueDirectory,
+					slopOptions,
+					cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Failed to start work for issue #{IssueNumber}.", selectedIssue.Issue.Number);
+			}
+		}
+	}
+
+	private async Task StartIssueWorkAsync(
+		GitHubClient client,
+		Issue issue,
+		string issueDir,
+		string relativeIssueDir,
+		SlopServiceOptions options,
+		CancellationToken cancellationToken)
+	{
+		Directory.CreateDirectory(issueDir);
+
+		var branchName = $"issue-{issue.Number}-{ToSlug(issue.Title)}";
+		var repoContext = new RepoContext
+		{
+			RepoPath = options.RepoPath,
+			Owner = options.RepoOwner,
+			Repo = options.RepoName,
+			DefaultBranch = options.DefaultBranch
+		};
+
+		var fileTool = new FileTool(repoContext);
+		var gitTool = new GitTool(repoContext);
+		var githubTool = await githubToolFactory.CreateClient(repoContext);
+
+		var metadata = new
+		{
+			issue.Number,
+			issue.Title,
+			issue.HtmlUrl,
+			issue.CreatedAt,
+			StartedAtUtc = DateTimeOffset.UtcNow,
+			branchName
+		};
+
+		fileTool.Write(
+			$"{relativeIssueDir}/metadata.json",
+			JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true }));
+		fileTool.Write(
+			$"{relativeIssueDir}/notes.md",
+			$"# Issue #{issue.Number}: {issue.Title}\n\n{issue.Body ?? "(no description)"}\n");
+
+		var gitResult = await gitTool.CreateBranch(branchName);
+
+		await client.Issue.Comment.Create(
+			options.RepoOwner,
+			options.RepoName,
+			issue.Number,
+			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{relativeIssueDir}`");
+
+		logger.LogInformation(
+			"Started work for issue #{IssueNumber} on branch {Branch}. Git output: {GitOutput}",
+			issue.Number,
+			branchName,
+			gitResult.Trim());
+
+		_ = githubTool;
+		cancellationToken.ThrowIfCancellationRequested();
+	}
+
+	private static string ToSlug(string value)
+	{
+		var chars = value
+			.ToLowerInvariant()
+			.Select(c => char.IsLetterOrDigit(c) ? c : '-')
+			.ToArray();
+		var raw = new string(chars);
+		var compact = string.Join("-", raw.Split('-', StringSplitOptions.RemoveEmptyEntries));
+		return compact.Length > 40 ? compact[..40] : compact;
+	}
+
+	private static TimeSpan NormalizePollInterval(TimeSpan configured)
+	{
+		var min = TimeSpan.FromSeconds(5);
+		return configured < min ? min : configured;
 	}
 }
 
@@ -18,5 +159,12 @@ public sealed class SlopServiceOptions
 {
 	public Uri OllamaUrl { get; set; } = new("http://localhost:11434");
 	public string Model { get; set; } = "llama3";
-	public string GithubToken { get; set; }
+	public string GithubToken { get; set; } = string.Empty;
+	public TimeSpan PollInterval { get; set; } = TimeSpan.FromMinutes(1);
+	public string IssueLabel { get; set; } = "slop";
+	public string RepoPath { get; set; } = "/agent/workspace/repo";
+	public string RepoOwner { get; set; } = "your-org";
+	public string RepoName { get; set; } = "your-repo";
+	public string DefaultBranch { get; set; } = "main";
+	public string WorkRootDirectory { get; set; } = ".slop/issues";
 }
