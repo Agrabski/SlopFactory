@@ -57,13 +57,8 @@ public class CodingAgentService(
 
 		Task<string> PushConfigured(string branch)
 		{
-			// Prefer the GitHub App installation token from the provided GitHub client when available.
-			var pushToken = serviceOptions.GithubToken;
-			if (githubClient?.Credentials != null)
-			{
-				// Octokit stores the token in the Credentials.Token property when created with a token.
-				pushToken = githubClient.Credentials.Token ?? pushToken;
-			}
+			// Use the GitHub App installation token from the provided GitHub client.
+			var pushToken = githubClient?.Credentials?.Token;
 
 			if (string.IsNullOrWhiteSpace(pushToken))
 			{

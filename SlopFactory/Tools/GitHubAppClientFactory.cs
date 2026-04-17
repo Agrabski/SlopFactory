@@ -5,12 +5,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 namespace SlopFactory.Tools;
 
+using System.IO;
+
 public class GitHubAppClientFactory(
 	IOptions<GitHubAppOptions> appOptions,
 	IOptions<GithubOptions> githubOptions) : IGitHubAppClientFactory
 {
 	private readonly string _appId = appOptions.Value.AppId;
-	private readonly string _privateKeyPem = appOptions.Value.PrivateKeyPem;
+	private readonly string _privateKeyPemFile = appOptions.Value.PrivateKeyPemFile;
 	private readonly long _installationId = githubOptions.Value.InstallationId;
 
 	public async Task<GitHubClient> CreateClient()
@@ -35,8 +37,9 @@ public class GitHubAppClientFactory(
 
 	private string CreateJwt()
 	{
+		var privateKeyPem = File.ReadAllText(_privateKeyPemFile);
 		using var rsa = RSA.Create();
-		rsa.ImportFromPem(_privateKeyPem.ToCharArray());
+		rsa.ImportFromPem(privateKeyPem.ToCharArray());
 
 		var securityKey = new RsaSecurityKey(rsa);
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);

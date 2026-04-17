@@ -166,7 +166,7 @@ public sealed class SlopServiceOptions
 {
 	public Uri OllamaUrl { get; set; } = new("http://localhost:11434");
 	public string Model { get; set; } = "llama3";
-	public string GithubToken { get; set; } = string.Empty;
+
 	public TimeSpan PollInterval { get; set; } = TimeSpan.FromMinutes(1);
 	public string IssueLabel { get; set; } = "slop";
 	public string RepoPath { get; set; } = "/agent/workspace/repo";
