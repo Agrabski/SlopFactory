@@ -8,7 +8,7 @@ using System.ClientModel;
 
 namespace SlopFactory.Services;
 
-public class ChatClientFactory : IChatClientFactory
+public class ChatClientFactory(ILoggerFactory loggerFactory) : IChatClientFactory
 {
 	public AIAgent CreateAgent(SlopServiceOptions options, string instructions, IList<AITool> tools)
 	{
@@ -39,7 +39,7 @@ public class ChatClientFactory : IChatClientFactory
 			tools: tools);
 	}
 
-	private static AIAgent CreateOllamaAgent(
+	private AIAgent CreateOllamaAgent(
 		SlopServiceOptions options,
 		string instructions,
 		IList<AITool> tools)
@@ -63,11 +63,12 @@ public class ChatClientFactory : IChatClientFactory
 			{
 				Instructions = instructions,
 				ModelId = options.Model,
-				Tools = tools
+				Tools = tools,
+				AllowMultipleToolCalls = true,
 			}
 		};
 
-		return aiChatClient.AsAIAgent(agentOptions, null, null);
+		return aiChatClient.AsAIAgent(agentOptions, loggerFactory, null);
 	}
 
 	private static Uri NormalizeOllamaEndpoint(Uri configured)
