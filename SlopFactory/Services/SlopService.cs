@@ -174,6 +174,8 @@ public sealed class SlopServiceOptions
 	public string RepoName { get; set; } = "your-repo";
 	public string DefaultBranch { get; set; } = "main";
 	public string WorkRootDirectory { get; set; } = ".slop/issues";
+	public string LlmProvider { get; set; } = "Foundry";
 	public string FoundryProjectEndpoint { get; set; } = string.Empty;
+	public string OllamaApiKey { get; set; } = "ollama";
 	public string AgentInstructions { get; set; } = string.Empty;
 }

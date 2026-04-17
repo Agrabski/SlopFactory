@@ -1,5 +1,3 @@
-using Azure.AI.Projects;
-using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
@@ -11,6 +9,7 @@ namespace SlopFactory.Services;
 public class CodingAgentService(
 	IOptionsMonitor<SlopServiceOptions> options,
 	IGithubToolFactory githubToolFactory,
+	IChatClientFactory chatClientFactory,
 	ILogger<CodingAgentService> logger) : ICodingAgentService
 {
 	public async Task<string> ExecuteIssueTaskAsync(
@@ -22,10 +21,6 @@ public class CodingAgentService(
 		CancellationToken cancellationToken)
 	{
 		var serviceOptions = options.CurrentValue;
-		if (string.IsNullOrWhiteSpace(serviceOptions.FoundryProjectEndpoint))
-		{
-			return "Coding agent skipped: SlopService:FoundryProjectEndpoint is not configured.";
-		}
 
 		var fileTool = new FileTool(repoContext);
 		var gitTool = new GitTool(repoContext);
@@ -40,19 +35,19 @@ public class CodingAgentService(
 		tools.Add(AIFunctionFactory.Create(PushConfigured));
 		tools.Add(AIFunctionFactory.Create(AskIssueQuestion));
 
-		var projectClient = new AIProjectClient(
-			new Uri(serviceOptions.FoundryProjectEndpoint),
-			new AzureCliCredential());
 		var instructions = string.IsNullOrWhiteSpace(serviceOptions.AgentInstructions)
 			? "You are an autonomous coding agent. Complete the task using tools, and ask clarifying questions when blocked."
 			: serviceOptions.AgentInstructions;
 
-		var agent = projectClient.AsAIAgent(
-			model: serviceOptions.Model,
-			instructions: instructions,
-			name: "SlopFactoryCoder",
-			description: "Works GitHub issues by editing code and using git/github tools.",
-			tools: tools);
+		AIAgent agent;
+		try
+		{
+			agent = chatClientFactory.CreateAgent(serviceOptions, instructions, tools);
+		}
+		catch (InvalidOperationException ex)
+		{
+			return $"Coding agent skipped: {ex.Message}";
+		}
 
 		var prompt = BuildIssuePrompt(issue, repoContext, branchName, relativeIssueDirectory);
 		logger.LogInformation("Running coding agent for issue #{IssueNumber}.", issue.Number);
