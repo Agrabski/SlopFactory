@@ -58,7 +58,7 @@ public class CodingAgentService(
 		Task<string> PushConfigured(string branch)
 		{
 			// Use the GitHub App installation token from the provided GitHub client.
-			var pushToken = githubClient?.Credentials?.Token;
+			var pushToken = githubClient?.Credentials?.GetToken();
 
 			if (string.IsNullOrWhiteSpace(pushToken))
 			{
