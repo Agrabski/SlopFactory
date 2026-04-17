@@ -30,15 +30,10 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore
 
     - name: Build and publish container image
-      # This step uses the dotnet SDK to perform the publish and push internally,
-      # ensuring the image is built and theoretically accessible for the subsequent steps.
-      run: dotnet publish --os linux /t:PublishContainer --self-contained true -c Release --no-restore /p:ContainerImageTag=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+      run: dotnet publish --os linux /t:PublishContainer --self-contained true -c Release /p:ContainerImageTag=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
 
-    # --- Start of Docker Tutorial Pattern Implementation ---
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
