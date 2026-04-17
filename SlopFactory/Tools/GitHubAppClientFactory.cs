@@ -45,11 +45,15 @@ public class GitHubAppClientFactory(
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
 		var now = DateTimeOffset.UtcNow;
+		var issuedAt = now.UtcDateTime;
+		var notBefore = now.AddMinutes(-1).UtcDateTime;
+		var expiresAt = now.AddMinutes(10).UtcDateTime;
 
 		var token = new JwtSecurityToken(
 			issuer: _appId,
-			expires: now.AddMinutes(10).UtcDateTime,
-			notBefore: now.AddMinutes(-1).UtcDateTime,
+			issuedAt: issuedAt,
+			notBefore: notBefore,
+			expires: expiresAt,
 			signingCredentials: credentials
 		);
 
