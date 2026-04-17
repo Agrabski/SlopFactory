@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using Octokit;
 using SlopFactory.Tools;
@@ -97,6 +100,43 @@ public class SlopService(
 			Repo = options.RepoName,
 			DefaultBranch = options.DefaultBranch
 		};
+
+		// Ensure local clone exists so tools that run in the repo directory can operate.
+		var repoPathRoot = repoContext.RepoPath;
+		var cloneToken = client?.Credentials?.GetToken();
+		var cloneUrl = string.IsNullOrWhiteSpace(cloneToken)
+			? $"https://github.com/{repoContext.Owner}/{repoContext.Repo}.git"
+			: $"https://{cloneToken}@github.com/{repoContext.Owner}/{repoContext.Repo}.git";
+
+		if (!Directory.Exists(repoPathRoot) || !Directory.Exists(Path.Combine(repoPathRoot, ".git")))
+		{
+			try
+			{
+				var parent = Path.GetDirectoryName(repoPathRoot) ?? "/";
+				Directory.CreateDirectory(parent);
+				var psi = new ProcessStartInfo
+				{
+					FileName = "/bin/bash",
+					ArgumentList = {"-c", $"git clone --depth 1 --branch {branchName} {cloneUrl} {repoPathRoot}" },
+					RedirectStandardOutput = true,
+					RedirectStandardError = true,
+					WorkingDirectory = parent
+				};
+				var proc = Process.Start(psi);
+				var outText = await proc.StandardOutput.ReadToEndAsync();
+				var errText = await proc.StandardError.ReadToEndAsync();
+				if (!proc.HasExited)
+					proc.WaitForExit();
+				if (proc.ExitCode != 0)
+				{
+					logger.LogWarning("Git clone returned non-zero exit code: {Out} {Err}", outText, errText);
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogWarning(ex, "Failed to clone repository; continuing without clone.");
+			}
+		}
 
 		var fileTool = new FileTool(repoContext);
 		var gitTool = new GitTool(repoContext);
