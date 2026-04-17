@@ -10,6 +10,7 @@ public class CodingAgentService(
 	IOptionsMonitor<SlopServiceOptions> options,
 	IGithubToolFactory githubToolFactory,
 	IChatClientFactory chatClientFactory,
+	IGitHubAppClientFactory gitHubAppClientFactory,
 	ILogger<CodingAgentService> logger) : ICodingAgentService
 {
 	public async Task<string> ExecuteIssueTaskAsync(
@@ -23,9 +24,9 @@ public class CodingAgentService(
 		var serviceOptions = options.CurrentValue;
 
 		var fileTool = new FileTool(repoContext);
-		var gitTool = new GitTool(repoContext);
 		var shellTool = new ShellTool(repoContext);
 		var gitHubTool = await githubToolFactory.CreateClient(repoContext);
+		var gitTool = new GitTool(repoContext, (await gitHubAppClientFactory.CreateClient()).Credentials.GetToken());
 
 		List<AITool> tools = [];
 		tools.AddRange(fileTool.GetTools());
@@ -65,7 +66,7 @@ public class CodingAgentService(
 				return Task.FromResult("Push skipped: GitHub token is not configured.");
 			}
 
-			return gitTool.Push(branch, pushToken);
+			return gitTool.Push(branch);
 		}
 
 		async Task<string> AskIssueQuestion(string question)
