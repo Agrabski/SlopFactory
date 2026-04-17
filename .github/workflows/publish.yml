@@ -43,8 +43,5 @@ jobs:
 
     - name: Push Docker image to ghcr.io
       # Push the specific commit SHA tag
-      run: docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+      run: docker push slopfactory:latest
 
-    - name: Push latest tag
-      # Tag and push the latest version
-      run: docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest && docker push ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
