@@ -34,8 +34,7 @@ public class IssueSelectionService(
 		{
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var relativeIssueDir = Path.Combine(slopOptions.WorkRootDirectory, issue.Number.ToString())
-				.Replace('\\', '/');
+			var relativeIssueDir = "issue_"+ issue.Number;
 			var issueDir = Path.Combine(slopOptions.RepoPath, relativeIssueDir);
 
 			if (Directory.Exists(issueDir))

@@ -71,7 +71,6 @@ public class SlopService(
 					client,
 					selectedIssue.Issue,
 					selectedIssue.IssueDirectory,
-					selectedIssue.RelativeIssueDirectory,
 					slopOptions,
 					cancellationToken);
 			}
@@ -86,7 +85,6 @@ public class SlopService(
 		GitHubClient client,
 		Issue issue,
 		string issueDir,
-		string relativeIssueDir,
 		SlopServiceOptions options,
 		CancellationToken cancellationToken)
 	{
@@ -95,7 +93,7 @@ public class SlopService(
 		var branchName = $"issue-{issue.Number}-{ToSlug(issue.Title)}";
 		var repoContext = new RepoContext
 		{
-			RepoPath = options.RepoPath,
+			RepoPath = issueDir,
 			Owner = options.RepoOwner,
 			Repo = options.RepoName,
 			DefaultBranch = options.DefaultBranch
@@ -108,11 +106,11 @@ public class SlopService(
 			? $"https://github.com/{repoContext.Owner}/{repoContext.Repo}.git"
 			: $"https://{cloneToken}@github.com/{repoContext.Owner}/{repoContext.Repo}.git";
 
-		if (!Directory.Exists(repoPathRoot) || !Directory.Exists(Path.Combine(repoPathRoot, ".git")))
+		if (!Directory.Exists(issueDir) || !Directory.Exists(Path.Combine(issueDir, ".git")))
 		{
 			try
 			{
-				var parent = Path.GetDirectoryName(repoPathRoot) ?? "/";
+				var parent = Path.GetDirectoryName(issueDir) ?? "/";
 				Directory.CreateDirectory(parent);
 				var psi = new ProcessStartInfo
 				{
@@ -152,10 +150,10 @@ public class SlopService(
 		};
 
 		fileTool.Write(
-			$"{relativeIssueDir}/metadata.json",
+			$"{issueDir}/metadata.json",
 			JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true }));
 		fileTool.Write(
-			$"{relativeIssueDir}/notes.md",
+			$"{issueDir}/notes.md",
 			$"# Issue #{issue.Number}: {issue.Title}\n\n{issue.Body ?? "(no description)"}\n");
 
 		var gitResult = await gitTool.CreateBranch(branchName);
@@ -164,13 +162,13 @@ public class SlopService(
 			options.RepoOwner,
 			options.RepoName,
 			issue.Number,
-			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{relativeIssueDir}`");
+			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{issueDir}`");
 
 		var agentResult = await codingAgentService.ExecuteIssueTaskAsync(
 			issue,
 			repoContext,
 			branchName,
-			relativeIssueDir,
+			issueDir,
 			client,
 			cancellationToken);
 
@@ -213,7 +211,6 @@ public sealed class SlopServiceOptions
 	public string RepoOwner { get; set; } = "your-org";
 	public string RepoName { get; set; } = "your-repo";
 	public string DefaultBranch { get; set; } = "main";
-	public string WorkRootDirectory { get; set; } = ".slop/issues";
 	public string LlmProvider { get; set; } = "Foundry";
 	public string FoundryProjectEndpoint { get; set; } = string.Empty;
 	public string OllamaApiKey { get; set; } = "ollama";
