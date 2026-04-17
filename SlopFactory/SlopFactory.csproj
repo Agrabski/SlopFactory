@@ -5,6 +5,7 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ContainerRegistry>ghcr.io</ContainerRegistry>
+		<ContainerRepository>agrabski/slopfactory</ContainerRepository>
 	</PropertyGroup>
 
 	<ItemGroup>
