@@ -121,8 +121,8 @@ public class SlopService(
 					WorkingDirectory = parent
 				};
 				var proc = Process.Start(psi);
-				var outText = await proc.StandardOutput.ReadToEndAsync();
-				var errText = await proc.StandardError.ReadToEndAsync();
+				var outText = await proc.StandardOutput.ReadToEndAsync(cancellationToken);
+				var errText = await proc.StandardError.ReadToEndAsync(cancellationToken);
 				if (!proc.HasExited)
 					proc.WaitForExit();
 				if (proc.ExitCode != 0)
@@ -158,6 +158,25 @@ public class SlopService(
 
 		var gitResult = await gitTool.CreateBranch(branchName);
 
+			string pushResult = string.Empty;
+			if (!string.IsNullOrWhiteSpace(cloneToken))
+			{
+				try
+				{
+					pushResult = await gitTool.Push(branchName, cloneToken);
+				}
+				catch (Exception ex)
+				{
+					logger.LogWarning(ex, "Failed to push branch {Branch} to remote.", branchName);
+				}
+			}
+			else
+			{
+				logger.LogWarning("No clone token available; skipping push of branch {Branch} to remote.", branchName);
+			}
+
+			var gitSummary = (gitResult + "\n" + pushResult).Trim();
+
 		await client.Issue.Comment.Create(
 			options.RepoOwner,
 			options.RepoName,
@@ -176,7 +195,7 @@ public class SlopService(
 			"Started work for issue #{IssueNumber} on branch {Branch}. Git output: {GitOutput}. Agent summary: {AgentSummary}",
 			issue.Number,
 			branchName,
-			gitResult.Trim(),
+			gitSummary,
 			agentResult);
 
 		cancellationToken.ThrowIfCancellationRequested();
