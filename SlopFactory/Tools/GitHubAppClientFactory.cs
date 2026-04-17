@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 namespace SlopFactory.Tools;
 
@@ -45,13 +46,19 @@ public class GitHubAppClientFactory(
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
 		var now = DateTimeOffset.UtcNow;
-		var issuedAt = now.UtcDateTime;
+		var epoch = now.ToUnixTimeSeconds().ToString();
+
+		var claims = new[]
+		{
+			new Claim(JwtRegisteredClaimNames.Iat, epoch, ClaimValueTypes.Integer64)
+		};
+
 		var notBefore = now.AddMinutes(-1).UtcDateTime;
 		var expiresAt = now.AddMinutes(10).UtcDateTime;
 
 		var token = new JwtSecurityToken(
 			issuer: _appId,
-			issuedAt: issuedAt,
+			claims: claims,
 			notBefore: notBefore,
 			expires: expiresAt,
 			signingCredentials: credentials
