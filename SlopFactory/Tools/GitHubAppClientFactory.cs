@@ -46,24 +46,25 @@ public class GitHubAppClientFactory(
 		var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
 		var now = DateTimeOffset.UtcNow;
-		var epoch = now.ToUnixTimeSeconds().ToString();
+		var iat = now.ToUnixTimeSeconds();
+		var exp = now.AddMinutes(10).ToUnixTimeSeconds();
 
-		var claims = new[]
+		// Prefer a numeric iss when possible per GitHub's expectations.
+		object issValue = _appId;
+		if (long.TryParse(_appId, out var parsed))
 		{
-			new Claim(JwtRegisteredClaimNames.Iat, epoch, ClaimValueTypes.Integer64)
+			issValue = parsed;
+		}
+
+		var header = new JwtHeader(credentials);
+		var payload = new JwtPayload
+		{
+			{ "iat", iat },
+			{ "exp", exp },
+			{ "iss", issValue }
 		};
 
-		var notBefore = now.AddMinutes(-1).UtcDateTime;
-		var expiresAt = now.AddMinutes(10).UtcDateTime;
-
-		var token = new JwtSecurityToken(
-			issuer: _appId,
-			claims: claims,
-			notBefore: notBefore,
-			expires: expiresAt,
-			signingCredentials: credentials
-		);
-
+		var token = new JwtSecurityToken(header, payload);
 		return new JwtSecurityTokenHandler().WriteToken(token);
 	}
 }
