@@ -72,7 +72,8 @@ public class SlopService(
 					selectedIssue.Issue,
 					selectedIssue.IssueDirectory,
 					slopOptions,
-					cancellationToken);
+					cancellationToken
+				);
 			}
 			catch (Exception ex)
 			{
@@ -101,7 +102,7 @@ public class SlopService(
 
 		// Ensure local clone exists so tools that run in the repo directory can operate.
 		var repoPathRoot = repoContext.RepoPath;
-		var cloneToken = client?.Credentials?.GetToken();
+		var cloneToken = client?.Credentials?.GetToken()!;
 		var cloneUrl = string.IsNullOrWhiteSpace(cloneToken)
 			? $"https://github.com/{repoContext.Owner}/{repoContext.Repo}.git"
 			: $"https://x-access-token:{cloneToken}@github.com/{repoContext.Owner}/{repoContext.Repo}.git";
@@ -115,7 +116,7 @@ public class SlopService(
 				var psi = new ProcessStartInfo
 				{
 					FileName = "/bin/bash",
-					ArgumentList = {"-c", $"git clone --depth 1 --branch {options.DefaultBranch} {cloneUrl} {repoPathRoot}" },
+					ArgumentList = { "-c", $"git clone --depth 1 --branch {options.DefaultBranch} {cloneUrl} {repoPathRoot}" },
 					RedirectStandardOutput = true,
 					RedirectStandardError = true,
 					WorkingDirectory = parent
@@ -124,7 +125,7 @@ public class SlopService(
 				var outText = await proc.StandardOutput.ReadToEndAsync(cancellationToken);
 				var errText = await proc.StandardError.ReadToEndAsync(cancellationToken);
 				if (!proc.HasExited)
-					proc.WaitForExit();
+					await proc.WaitForExitAsync(cancellationToken);
 				if (proc.ExitCode != 0)
 				{
 					logger.LogWarning("Git clone returned non-zero exit code: {Out} {Err}", outText, errText);
@@ -137,7 +138,8 @@ public class SlopService(
 		}
 
 		var fileTool = new FileTool(repoContext);
-		var gitTool = new GitTool(repoContext);
+		var gitTool = new GitTool(repoContext, cloneToken);
+		await gitTool.CreateBranch(branchName);
 
 		var metadata = new
 		{
@@ -151,37 +153,23 @@ public class SlopService(
 
 		fileTool.Write(
 			$"{issueDir}/metadata.json",
-			JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true }));
+			JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true })
+		);
 		fileTool.Write(
 			$"{issueDir}/notes.md",
-			$"# Issue #{issue.Number}: {issue.Title}\n\n{issue.Body ?? "(no description)"}\n");
+			$"# Issue #{issue.Number}: {issue.Title}\n\n{issue.Body ?? "(no description)"}\n"
+		);
 
 		var gitResult = await gitTool.CreateBranch(branchName);
+		gitResult += await gitTool.Push(branchName);
 
-			string pushResult = string.Empty;
-			if (!string.IsNullOrWhiteSpace(cloneToken))
-			{
-				try
-				{
-					pushResult = await gitTool.Push(branchName, cloneToken);
-				}
-				catch (Exception ex)
-				{
-					logger.LogWarning(ex, "Failed to push branch {Branch} to remote.", branchName);
-				}
-			}
-			else
-			{
-				logger.LogWarning("No clone token available; skipping push of branch {Branch} to remote.", branchName);
-			}
-
-			var gitSummary = (gitResult + "\n" + pushResult).Trim();
 
 		await client.Issue.Comment.Create(
 			options.RepoOwner,
 			options.RepoName,
 			issue.Number,
-			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{issueDir}`");
+			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{issueDir}`"
+		);
 
 		var agentResult = await codingAgentService.ExecuteIssueTaskAsync(
 			issue,
@@ -189,14 +177,16 @@ public class SlopService(
 			branchName,
 			issueDir,
 			client,
-			cancellationToken);
+			cancellationToken
+		);
 
 		logger.LogInformation(
 			"Started work for issue #{IssueNumber} on branch {Branch}. Git output: {GitOutput}. Agent summary: {AgentSummary}",
 			issue.Number,
 			branchName,
-			gitSummary,
-			agentResult);
+			gitResult.Trim(),
+			agentResult
+		);
 
 		cancellationToken.ThrowIfCancellationRequested();
 	}
@@ -218,7 +208,6 @@ public class SlopService(
 		return configured < min ? min : configured;
 	}
 }
-
 public sealed class SlopServiceOptions
 {
 	public Uri OllamaUrl { get; set; } = new("http://localhost:11434");
