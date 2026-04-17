@@ -13,14 +13,15 @@ public class ShellTool(RepoContext context) : IAIToolbox
 		var psi = new ProcessStartInfo
 		{
 			FileName = "/bin/bash",
-			Arguments = $"-c \"cd {context.RepoPath} && {command}\"",
+			ArgumentList = {"-c", command },
 			RedirectStandardOutput = true,
-			RedirectStandardError = true
+			RedirectStandardError = true,
+			WorkingDirectory = context.RepoPath
 		};
 
 		var process = Process.Start(psi);
-		string output = await process.StandardOutput.ReadToEndAsync();
-		string error = await process.StandardError.ReadToEndAsync();
+		var output = await process.StandardOutput.ReadToEndAsync();
+		var error = await process.StandardError.ReadToEndAsync();
 
 		return output + "\n" + error;
 	}

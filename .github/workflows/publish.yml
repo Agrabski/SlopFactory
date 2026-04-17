@@ -1,0 +1,62 @@
+
+name: Build and Publish Container Image
+
+on:
+  push:
+    branches:
+      - main # Adjust this branch name if your primary branch is different
+  pull_request:
+    branches:
+      - main
+
+env:
+  # Target the SDK version used by your project (net10.0)
+  DOTNET_VERSION: '10.0.x'
+  # GitHub Container Registry URL
+  DOCKER_REGISTRY: ghcr.io
+  # Full repository name (owner/repo)
+  DOCKER_IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build and publish container image
+      # This step uses the dotnet SDK to perform the publish and push internally,
+      # ensuring the image is built and theoretically accessible for the subsequent steps.
+      run: dotnet publish --os linux /t:PublishContainer --self-contained true -c Release --no-restore /p:ContainerImageTag=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+
+    # --- Start of Docker Tutorial Pattern Implementation ---
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Docker Image Locally (Re-running build step for explicit Docker context)
+      # Since the dotnet publish command already pushes, this step focuses on ensuring the local image exists 
+      # for the final push command to reference, simulating the tutorial's pattern.
+      # Note: In a real scenario, you might use a simple Dockerfile here if the publish fails to leave the image manifest.
+      run: docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+
+    - name: Push Docker image to ghcr.io
+      # Push the specific commit SHA tag
+      run: docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+
+    - name: Push latest tag
+      # Tag and push the latest version
+      run: docker tag ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest && docker push ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
