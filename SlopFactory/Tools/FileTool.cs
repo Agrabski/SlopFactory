@@ -1,7 +1,8 @@
+using Microsoft.Extensions.AI;
 using System.ComponentModel;
 namespace SlopFactory.Tools;
 
-public class FileTool(RepoContext context)
+public class FileTool(RepoContext context) : IAIToolbox
 {
 
 	private string Resolve(string relativePath)
@@ -35,4 +36,11 @@ public class FileTool(RepoContext context)
 		var text = File.ReadAllText(fullPath);
 		File.WriteAllText(fullPath, text.Replace(find, replace));
 	}
+
+	public IList<AITool> GetTools() =>
+	[
+		AIFunctionFactory.Create(Read),
+		AIFunctionFactory.Create(Write),
+		AIFunctionFactory.Create(Patch)
+	];
 }

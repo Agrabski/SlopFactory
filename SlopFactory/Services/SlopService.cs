@@ -7,8 +7,8 @@ namespace SlopFactory.Services;
 public class SlopService(
 	IOptionsMonitor<SlopServiceOptions> options,
 	IGitHubAppClientFactory gitHubAppClientFactory,
-	IGithubToolFactory githubToolFactory,
 	IIssueSelectionService issueSelectionService,
+	ICodingAgentService codingAgentService,
 	ILogger<SlopService> logger) : BackgroundService
 {
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -100,7 +100,6 @@ public class SlopService(
 
 		var fileTool = new FileTool(repoContext);
 		var gitTool = new GitTool(repoContext);
-		var githubTool = await githubToolFactory.CreateClient(repoContext);
 
 		var metadata = new
 		{
@@ -127,13 +126,21 @@ public class SlopService(
 			issue.Number,
 			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{relativeIssueDir}`");
 
+		var agentResult = await codingAgentService.ExecuteIssueTaskAsync(
+			issue,
+			repoContext,
+			branchName,
+			relativeIssueDir,
+			client,
+			cancellationToken);
+
 		logger.LogInformation(
-			"Started work for issue #{IssueNumber} on branch {Branch}. Git output: {GitOutput}",
+			"Started work for issue #{IssueNumber} on branch {Branch}. Git output: {GitOutput}. Agent summary: {AgentSummary}",
 			issue.Number,
 			branchName,
-			gitResult.Trim());
+			gitResult.Trim(),
+			agentResult);
 
-		_ = githubTool;
 		cancellationToken.ThrowIfCancellationRequested();
 	}
 
@@ -167,4 +174,6 @@ public sealed class SlopServiceOptions
 	public string RepoName { get; set; } = "your-repo";
 	public string DefaultBranch { get; set; } = "main";
 	public string WorkRootDirectory { get; set; } = ".slop/issues";
+	public string FoundryProjectEndpoint { get; set; } = string.Empty;
+	public string AgentInstructions { get; set; } = string.Empty;
 }

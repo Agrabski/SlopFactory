@@ -1,8 +1,9 @@
+using Microsoft.Extensions.AI;
 using System.ComponentModel;
 using System.Diagnostics;
 namespace SlopFactory.Tools;
 
-public class ShellTool(RepoContext context)
+public class ShellTool(RepoContext context) : IAIToolbox
 {
 
 	[Description("Execute a shell command inside the repository. Use for installs, builds, and tests.")]
@@ -23,4 +24,9 @@ public class ShellTool(RepoContext context)
 
 		return output + "\n" + error;
 	}
+
+	public IList<AITool> GetTools() =>
+	[
+		AIFunctionFactory.Create(Run)
+	];
 }

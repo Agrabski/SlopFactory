@@ -1,7 +1,8 @@
+using Microsoft.Extensions.AI;
 using System.ComponentModel;
 namespace SlopFactory.Tools;
 
-public class GitTool(RepoContext context)
+public class GitTool(RepoContext context) : IAIToolbox
 {
 	private readonly ShellTool _shell = new(context);
 
@@ -23,4 +24,11 @@ public class GitTool(RepoContext context)
 		var remote = $"https://{token}@github.com/{context.Owner}/{context.Repo}.git";
 		return await _shell.Run($"git push {remote} {branch}");
 	}
+
+	public IList<AITool> GetTools() =>
+	[
+		AIFunctionFactory.Create(CreateBranch),
+		AIFunctionFactory.Create(Commit),
+		AIFunctionFactory.Create(Push)
+	];
 }

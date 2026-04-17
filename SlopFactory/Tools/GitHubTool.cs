@@ -1,8 +1,9 @@
+using Microsoft.Extensions.AI;
 using Octokit;
 using System.ComponentModel;
 namespace SlopFactory.Tools;
 
-public class GitHubTool(GitHubClient client, RepoContext context)
+public class GitHubTool(GitHubClient client, RepoContext context) : IAIToolbox
 {
 
 	[Description("Create a pull request for the repository.")]
@@ -21,4 +22,9 @@ public class GitHubTool(GitHubClient client, RepoContext context)
 
 		return result.HtmlUrl;
 	}
+
+	public IList<AITool> GetTools() =>
+	[
+		AIFunctionFactory.Create(CreatePR)
+	];
 }
