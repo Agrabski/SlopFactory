@@ -25,13 +25,13 @@ public class CodingAgentService(
 	{
 		var serviceOptions = options.CurrentValue;
 
-		var fileTool = new FileTool(repoContext, factory.CreateLogger<FileTool>());
+		var fileTool = new FileEditTool(factory.CreateLogger<FileEditTool>(), repoContext);
 		var shellTool = new ShellTool(repoContext, factory.CreateLogger<ShellTool>());
 		var gitHubTool = await githubToolFactory.CreateClient(repoContext);
 		var gitTool = new GitTool(repoContext, (await gitHubAppClientFactory.CreateClient()).Credentials.GetToken(), factory.CreateLogger<ShellTool>());
 
 		List<AITool> tools = [];
-		//tools.AddRange(fileTool.GetTools());
+		tools.AddRange(fileTool.GetTools());
 		tools.AddRange(gitTool.GetTools());
 		tools.AddRange(shellTool.GetTools());
 		tools.AddRange(gitHubTool.GetTools());
