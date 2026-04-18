@@ -48,21 +48,13 @@ public class CodingAgentService(
 			(List<ChatMessage>)[new(ChatRole.User, prompt)],
 			cancellationToken: cancellationToken
 		);
-		if(!await run.TrySendMessageAsync(new TurnToken(emitEvents: true)))
+		if (!await run.TrySendMessageAsync(new TurnToken(emitEvents: true)))
 			throw new Exception("Failed to send message to agent.");
 
 		var result = "";
 		await foreach (var evt in run.WatchStreamAsync(cancellationToken).ConfigureAwait(false))
 		{
-			if (evt is AgentResponseUpdateEvent update)
-			{
-				var response = update.AsResponse();
-				foreach (var message in response.Messages)
-				{
-					logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.ExecutorId, message.Text);
-				}
-			}
-			else if (evt is WorkflowOutputEvent output)
+			if (evt is WorkflowOutputEvent output)
 			{
 				// Workflow completed
 				var conversationHistory = output.As<List<ChatMessage>>();
