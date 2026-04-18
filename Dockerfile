@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     ca-certificates \
     curl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* 
+    tree \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+RUN apt update
 
 ENV FLUTTER_VERSION 3.41.7
 ENV FLUTTER_DIR /opt/flutter
