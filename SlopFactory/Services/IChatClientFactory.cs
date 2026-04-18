@@ -5,5 +5,5 @@ namespace SlopFactory.Services;
 
 public interface IChatClientFactory
 {
-	AIAgent CreateAgent(SlopServiceOptions options, string instructions, IList<AITool> tools);
+	AIAgent CreateAgent(SlopServiceOptions options, IList<AITool> tools);
 }

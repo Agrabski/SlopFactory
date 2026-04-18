@@ -36,14 +36,10 @@ public class CodingAgentService(
 		tools.Add(AIFunctionFactory.Create(PushConfigured));
 		tools.Add(AIFunctionFactory.Create(AskIssueQuestion));
 
-		var instructions = string.IsNullOrWhiteSpace(serviceOptions.AgentInstructions)
-			? "You are an autonomous coding agent with expert coding skills. You will be presented with a task, solve it using available tools. You are working on a android flutter project. Install the necessary tools using Shell tools"
-			: serviceOptions.AgentInstructions;
-
 		AIAgent agent;
 		try
 		{
-			agent = chatClientFactory.CreateAgent(serviceOptions, instructions, tools);
+			agent = chatClientFactory.CreateAgent(serviceOptions, tools);
 		}
 		catch (InvalidOperationException ex)
 		{

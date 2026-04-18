@@ -1,6 +1,7 @@
 using Azure.AI.Projects;
 using Azure.Identity;
 using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
@@ -10,38 +11,20 @@ namespace SlopFactory.Services;
 
 public class ChatClientFactory(ILoggerFactory loggerFactory) : IChatClientFactory
 {
-	public AIAgent CreateAgent(SlopServiceOptions options, string instructions, IList<AITool> tools)
+	public AIAgent CreateAgent(SlopServiceOptions options, IList<AITool> tools)
 	{
 		if (options.LlmProvider.Equals("Ollama", StringComparison.OrdinalIgnoreCase))
-			return CreateOllamaAgent(options, instructions, tools);
+			return CreateOllamaAgent(options, tools);
 
 		if (string.IsNullOrWhiteSpace(options.FoundryProjectEndpoint))
-			throw new InvalidOperationException(
-				"SlopService:FoundryProjectEndpoint is not configured for Foundry provider.");
+			throw new InvalidOperationException("SlopService:FoundryProjectEndpoint is not configured for Foundry provider.");
 
-		return CreateFoundryAgent(options, instructions, tools);
+		throw new NotImplementedException();
 	}
 
-	private static AIAgent CreateFoundryAgent(
-		SlopServiceOptions options,
-		string instructions,
-		IList<AITool> tools)
-	{
-		var projectClient = new AIProjectClient(
-			new Uri(options.FoundryProjectEndpoint),
-			new AzureCliCredential());
-
-		return projectClient.AsAIAgent(
-			model: options.Model,
-			instructions: instructions,
-			name: "SlopFactoryCoder",
-			description: "Works GitHub issues by editing code and using git/github tools.",
-			tools: tools);
-	}
 
 	private AIAgent CreateOllamaAgent(
 		SlopServiceOptions options,
-		string instructions,
 		IList<AITool> tools)
 	{
 		var apiKey = string.IsNullOrWhiteSpace(options.OllamaApiKey) ? "ollama" : options.OllamaApiKey;
@@ -52,24 +35,93 @@ public class ChatClientFactory(ILoggerFactory loggerFactory) : IChatClientFactor
 			{
 				Endpoint = NormalizeOllamaEndpoint(options.OllamaUrl),
 				NetworkTimeout = TimeSpan.FromMinutes(30)
-			});
+			}
+		);
 
 		var aiChatClient = chatClient.AsIChatClient();
-		var agentOptions = new ChatClientAgentOptions
+		var writingAgent = CreateAgent(
+			options,
+			tools,
+			aiChatClient,
+			"slopfactory-coder",
+			"SlopFactoryCoder",
+			"Writes what modifications should be made to the code base",
+			);
+		var analysisAgentOptions = new ChatClientAgentOptions
 		{
-			Id = "slopfactory-coder",
-			Name = "SlopFactoryCoder",
-			Description = "Works GitHub issues by editing code and using git/github tools.",
+			Id = "slopfactory-analyzer",
+			Name = "Analyzer",
+			Description = "Analyzes tasks laid before it and creates instructions",
 			ChatOptions = new ChatOptions
 			{
 				Instructions = instructions,
 				ModelId = options.Model,
 				Tools = tools,
 				AllowMultipleToolCalls = true,
+				Reasoning = new()
+				{
+					Effort = ReasoningEffort.ExtraHigh,
+					Output = ReasoningOutput.Full
+				},
+				ToolMode = new AutoChatToolMode(),
 			},
 		};
 
-		return aiChatClient.AsAIAgent(agentOptions, loggerFactory, null);
+		var writerAgentOptions = new ChatClientAgentOptions
+		{
+			Id = "slopfactory-writer",
+			Name = "Writer",
+			Description = "Uses tools to ",
+			ChatOptions = new ChatOptions
+			{
+				Instructions = instructions,
+				ModelId = options.Model,
+				Tools = tools,
+				AllowMultipleToolCalls = true,
+				Reasoning = new()
+				{
+					Effort = ReasoningEffort.ExtraHigh,
+					Output = ReasoningOutput.Full
+				},
+				ToolMode = new AutoChatToolMode(),
+			},
+		};
+
+
+		var builder = new WorkflowBuilder()
+	}
+	private ChatClientAgent CreateAgent(
+		SlopServiceOptions options,
+		IList<AITool> tools,
+		IChatClient aiChatClient, 
+		string? id,
+		string? name,
+		string? description,
+		string? instructions
+	)
+	{
+
+		var writingAgentOptions = new ChatClientAgentOptions
+		{
+			Id = id,
+			Name = name,
+			Description = description,
+			ChatOptions = new()
+			{
+				Instructions = instructions,
+				ModelId = options.Model,
+				Tools = tools,
+				AllowMultipleToolCalls = true,
+				Reasoning = new()
+				{
+					Effort = ReasoningEffort.ExtraHigh,
+					Output = ReasoningOutput.Full
+				},
+				ToolMode = new AutoChatToolMode(),
+			},
+		};
+		var writingAgent = aiChatClient.AsAIAgent(writingAgentOptions, loggerFactory, null);
+		return writingAgent;
 	}
 
 	private static Uri NormalizeOllamaEndpoint(Uri configured)
