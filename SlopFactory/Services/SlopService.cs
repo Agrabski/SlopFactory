@@ -140,46 +140,20 @@ public class SlopService(
 			}
 		}
 
-		var fileTool = new FileTool(repoContext, loggerFactory.CreateLogger<FileTool>());
 		var gitTool = new GitTool(repoContext, cloneToken, loggerFactory.CreateLogger<ShellTool>());
 		await gitTool.CreateBranch(branchName);
-
-		var metadata = new
-		{
-			issue.Number,
-			issue.Title,
-			issue.HtmlUrl,
-			issue.CreatedAt,
-			StartedAtUtc = DateTimeOffset.UtcNow,
-			branchName
-		};
-
-		fileTool.Write(
-			$"{issueDir}/metadata.json",
-			JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true })
-		);
-		fileTool.Write(
-			$"{issueDir}/notes.md",
-			$"# Issue #{issue.Number}: {issue.Title}\n\n{issue.Body ?? "(no description)"}\n"
-		);
+		
 
 		var gitResult = await gitTool.CreateBranch(branchName);
 		gitResult += await gitTool.Push(branchName);
-
-
-		await client.Issue.Comment.Create(
-			options.RepoOwner,
-			options.RepoName,
-			issue.Number,
-			$"SlopFactory started working on this issue.\n\n- Branch: `{branchName}`\n- Workspace: `{issueDir}`"
-		);
+		
 
 		var agentResult = await codingAgentService.ExecuteIssueTaskAsync(
 			issue,
 			repoContext,
 			branchName,
 			issueDir,
-			client,
+			client!,
 			cancellationToken
 		);
 
