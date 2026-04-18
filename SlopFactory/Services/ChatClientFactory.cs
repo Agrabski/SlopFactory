@@ -50,7 +50,8 @@ public class ChatClientFactory(ILoggerFactory loggerFactory) : IChatClientFactor
 			new ApiKeyCredential(apiKey),
 			new OpenAIClientOptions
 			{
-				Endpoint = NormalizeOllamaEndpoint(options.OllamaUrl)
+				Endpoint = NormalizeOllamaEndpoint(options.OllamaUrl),
+				NetworkTimeout = TimeSpan.FromMinutes(30)
 			});
 
 		var aiChatClient = chatClient.AsIChatClient();
@@ -65,7 +66,7 @@ public class ChatClientFactory(ILoggerFactory loggerFactory) : IChatClientFactor
 				ModelId = options.Model,
 				Tools = tools,
 				AllowMultipleToolCalls = true,
-			}
+			},
 		};
 
 		return aiChatClient.AsAIAgent(agentOptions, loggerFactory, null);
