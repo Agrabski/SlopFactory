@@ -55,7 +55,7 @@ public class CodingAgentService(
 		await foreach (var evt in run.WatchStreamAsync(cancellationToken).ConfigureAwait(false))
 		{
 			if (evt is AgentResponseUpdateEvent update)
-				logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.Update.AuthorName, string.Join(" ", update.Update.Text);
+				logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.Update.AuthorName, update.Update.Text);
 			else if (evt is WorkflowOutputEvent output)
 			{
 				// Workflow completed
