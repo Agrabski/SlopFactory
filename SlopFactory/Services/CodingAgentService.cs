@@ -118,6 +118,7 @@ public class CodingAgentService(
 			- If you need to find a specific file or piece of code, use the file tool.
 			- Dont ask any questions about the code structure, discover it yourself.
 			- Make notes when you discover something usefull.
+			- This message contains the issue description and context, dont ask what you should do.
 			""";
 	}
 
