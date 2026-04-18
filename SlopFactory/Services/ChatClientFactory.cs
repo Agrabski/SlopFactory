@@ -43,13 +43,6 @@ public class ChatClientFactory : IChatClientFactory
 			{
 				Endpoint = NormalizeOllamaEndpoint(options.OllamaUrl),
 				NetworkTimeout = TimeSpan.FromMinutes(30),
-				ClientLoggingOptions = new ClientLoggingOptions()
-				{
-					EnableLogging = true,
-					EnableMessageContentLogging = true,
-					EnableMessageLogging = true,
-					LoggerFactory = _loggerFactory
-				},
 				EnableDistributedTracing = true,
 			}
 		);
