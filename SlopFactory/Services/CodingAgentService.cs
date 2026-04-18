@@ -1,4 +1,5 @@
 using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Octokit;
@@ -36,23 +37,44 @@ public class CodingAgentService(
 		tools.Add(AIFunctionFactory.Create(PushConfigured));
 		tools.Add(AIFunctionFactory.Create(AskIssueQuestion));
 
-		AIAgent agent;
-		try
-		{
-			agent = chatClientFactory.CreateAgent(serviceOptions, tools);
-		}
-		catch (InvalidOperationException ex)
-		{
-			return $"Coding agent skipped: {ex.Message}";
-		}
+		var agent = chatClientFactory.CreateAgent(serviceOptions, tools);
 
 		var prompt = BuildIssuePrompt(issue, repoContext, branchName, relativeIssueDirectory);
 		logger.LogInformation("Running coding agent for issue #{IssueNumber}.", issue.Number);
 		logger.LogDebug("Agent prompt: {Prompt}", prompt);
 
-		var response = await agent.RunAsync(new ChatMessage(ChatRole.User, (string)prompt), cancellationToken: cancellationToken);
-		logger.LogDebug("Agent response: {Response}", response.Text);
-		return response.Text;
+		await using var run = await InProcessExecution.RunStreamingAsync(
+			agent,
+			(List<ChatMessage>)[new(ChatRole.User, prompt)],
+			cancellationToken: cancellationToken
+		);
+		await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
+
+		var result = "";
+		await foreach (var evt in run.WatchStreamAsync(cancellationToken).ConfigureAwait(false))
+		{
+			if (evt is AgentResponseUpdateEvent update)
+			{
+				var response = update.AsResponse();
+				foreach (var message in response.Messages)
+				{
+					logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.ExecutorId, message.Text);
+				}
+			}
+			else if (evt is WorkflowOutputEvent output)
+			{
+				// Workflow completed
+				var conversationHistory = output.As<List<ChatMessage>>();
+				foreach (var message in conversationHistory ?? [])
+				{
+					logger.LogDebug("{MessageAuthorName}: {MessageText}", message.AuthorName, message.Text);
+					result += message.Text + "\n";
+				}
+				break;
+			}
+		}
+		logger.LogDebug("Agent response: {Response}", result);
+		return result;
 
 
 		Task<string> PushConfigured(string branch)
@@ -114,7 +136,7 @@ public class CodingAgentService(
 			- Dont ask any questions about the code structure, discover it yourself.
 			- Make notes when you discover something useful.
 			- This message contains the issue description and context, dont ask what you should do.
-			
+
 
 			""";
 	}

@@ -18,7 +18,7 @@ public class ChatClientFactory : IChatClientFactory
 		_loggerFactory = loggerFactory;
 	}
 
-	public AIAgent CreateAgent(SlopServiceOptions options, IList<AITool> tools)
+	public Workflow CreateAgent(SlopServiceOptions options, IList<AITool> tools)
 	{
 		if (options.LlmProvider.Equals("Ollama", StringComparison.OrdinalIgnoreCase))
 			return CreateOllamaAgent(options, tools);
@@ -29,7 +29,7 @@ public class ChatClientFactory : IChatClientFactory
 		throw new NotImplementedException();
 	}
 
-	private AIAgent CreateOllamaAgent(
+	private Workflow CreateOllamaAgent(
 		SlopServiceOptions options,
 		IList<AITool> tools)
 	{
@@ -77,8 +77,7 @@ public class ChatClientFactory : IChatClientFactory
 				}
 			)
 			.AddParticipants([analyzerAgent, coderAgent, toolUserAgent])
-			.Build()
-			.AsAIAgent();
+			.Build();
 	}
 
 	private AIAgent CreateAgent(

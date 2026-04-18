@@ -14,6 +14,7 @@ public class SlopService(
 	ICodingAgentService codingAgentService,
 	ILogger<SlopService> logger) : BackgroundService
 {
+	private static readonly ActivitySource ActivitySource = new("SlopFactory");
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Starting SlopService issue polling worker.");
@@ -89,6 +90,7 @@ public class SlopService(
 		SlopServiceOptions options,
 		CancellationToken cancellationToken)
 	{
+		using var _ = ActivitySource.StartActivity();
 		Directory.CreateDirectory(issueDir);
 
 		var branchName = $"issue-{issue.Number}-{ToSlug(issue.Title)}";

@@ -1,9 +1,10 @@
 using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 
 namespace SlopFactory.Services;
 
 public interface IChatClientFactory
 {
-	AIAgent CreateAgent(SlopServiceOptions options, IList<AITool> tools);
+	Workflow CreateAgent(SlopServiceOptions options, IList<AITool> tools);
 }
