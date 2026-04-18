@@ -112,6 +112,7 @@ public class CodingAgentService(
 			- Use tools to discover information, only ask for clarification if absolutely necessary.
 			- Keep actions focused on this task only.
 			- If you need to find a specific file or piece of code, use the file tool.
+			- Modify the existing code using the file tool.
 			- Dont ask any questions about the code structure, discover it yourself.
 			- Make notes when you discover something useful.
 			- This message contains the issue description and context, dont ask what you should do.
