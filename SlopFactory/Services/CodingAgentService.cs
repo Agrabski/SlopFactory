@@ -99,12 +99,13 @@ public class CodingAgentService(
 			- Run relevant checks/tests.
 			- Commit changes with a clear message.
 			- If useful, open a pull request.
-
-			Issue title:
-			{issue.Title}
-
-			Issue body:
-			{issue.Body ?? "(no description provided)"}
+			
+			The issue you are tasked with:
+			
+				Issue title:
+				{issue.Title}
+				Issue body:
+				{issue.Body ?? "(no description provided)"}
 
 			Context:
 			- Repository root: {repoContext.RepoPath}
