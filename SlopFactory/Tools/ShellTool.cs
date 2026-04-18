@@ -22,7 +22,7 @@ public class ShellTool(RepoContext context, ILogger<ShellTool> logger) : IAITool
 			ArgumentList = { "-c", command },
 			RedirectStandardOutput = true,
 			RedirectStandardError = true,
-			WorkingDirectory = context.RepoPath
+			WorkingDirectory = context.RepoPath,
 		};
 
 		try

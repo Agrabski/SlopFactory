@@ -129,6 +129,7 @@ public class CodingAgentService(
 			{options.CurrentValue.AgentInstructions}
 
 			RULES:
+			- DO NOT HALUCINATE
 			- Always link the issue number in the relevant pull request.
 			- dont use sudo, you are already an elevated user, if you need to install a package, use apt directly.
 			- Implement the required changes in the repository.

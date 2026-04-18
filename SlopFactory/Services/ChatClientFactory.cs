@@ -98,6 +98,7 @@ public class ChatClientFactory : IChatClientFactory
 			Id = id,
 			Name = name,
 			Description = description,
+			ChatHistoryProvider = new InMemoryChatHistoryProvider(),
 			ChatOptions = new()
 			{
 				Instructions = instructions,
@@ -107,8 +108,10 @@ public class ChatClientFactory : IChatClientFactory
 				Reasoning = new()
 				{
 					Output = ReasoningOutput.Full,
+					
 				},
 				ToolMode = toolMode ?? ChatToolMode.Auto,
+				
 			},
 		};
 

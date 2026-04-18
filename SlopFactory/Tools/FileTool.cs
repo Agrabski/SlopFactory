@@ -47,7 +47,7 @@ public class FileTool(RepoContext context, ILogger<FileTool> logger) : IAIToolbo
 	}
 
 	[Description("Replace text inside a file in the repository.")]
-	public void Patch(
+	public bool Patch(
 		[Description("Path relative to the repository root.")] string path,
 		[Description("Text to find.")] string find,
 		[Description("Replacement text.")] string replace)
@@ -57,7 +57,7 @@ public class FileTool(RepoContext context, ILogger<FileTool> logger) : IAIToolbo
 		if (!File.Exists(fullPath))
 		{
 			logger.LogWarning("Patch requested but file does not exist: {Path}", path);
-			return;
+			return false;
 		}
 
 		logger.LogInformation("Patching file: {Path}", path);
@@ -72,6 +72,7 @@ public class FileTool(RepoContext context, ILogger<FileTool> logger) : IAIToolbo
 			path,
 			occurrences
 		);
+		return true;
 	}
 
 	public IList<AITool> GetTools() =>
