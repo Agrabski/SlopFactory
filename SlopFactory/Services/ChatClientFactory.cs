@@ -52,7 +52,7 @@ public class ChatClientFactory : IChatClientFactory
 		// Instructions tailored for each role in the group chat
 		const string analyzerInstructions = "You are the Analyzer. Examine repository files, infer requirements, and produce a concise general plan outlining necessary edits and rationale. Try to plan for unit tests whenever possible. Do not sugest using interactive tools (code, nano, vi)";
 		const string coderInstructions = "You are the Coder. Given the Analyzer's plan, decide concrete code edits, file paths, and minimal diffs required to implement the plan. Be explicit and unambiguous. Instruct the ToolUser to make the edits you require. Add tests whenever possible.";
-		const string toolUserInstructions = "You are the ToolUser. You execute tool actions (run commands, commit). Follow the Coder's edit instructions precisely and report results and diffs. When anyone wants to edit a file, you must execute the relevant tool.";
+		const string reviewerInstructions = "You are the Reviewer. Critically examine coders and analyzers actions and provide feedback. Point out any errors or potentially erroneus edits";
 
 		// Create three agents: analyzer, coder, and tool user
 		var analyzerAgent = CreateAgent(options, tools, aiChatClient, "slopfactory-analyzer", "Analyzer", "Analyzes requirements and produces a general plan.", analyzerInstructions);
@@ -61,10 +61,10 @@ public class ChatClientFactory : IChatClientFactory
 			options,
 			tools,
 			aiChatClient,
-			"slopfactory-tooluser",
-			"ToolUser",
-			"Uses repository tools to apply edits and create commits as instructed.",
-			toolUserInstructions,
+			"slopfactory-reviewer",
+			"Reviewer",
+			"Reviews shit",
+			reviewerInstructions,
 			ChatToolMode.Auto
 		);
 
@@ -75,7 +75,7 @@ public class ChatClientFactory : IChatClientFactory
 
 		return AgentWorkflowBuilder.CreateGroupChatBuilderWith(agents => new RoundRobinGroupChatManager(agents)
 				{
-					MaximumIterationCount = 30,
+					MaximumIterationCount = 500,
 				}
 			)
 			.AddParticipants([analyzerAgent, coderAgent, toolUserAgent])
