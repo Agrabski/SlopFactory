@@ -52,10 +52,18 @@ public class CodingAgentService(
 			throw new Exception("Failed to send message to agent.");
 
 		var result = "";
+		var currentBuffer = string.Empty;
+		var currentAuthor = string.Empty;
 		await foreach (var evt in run.WatchStreamAsync(cancellationToken).ConfigureAwait(false))
 		{
 			if (evt is AgentResponseUpdateEvent update)
-				logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.Update.AuthorName, update.Update.Text);
+			{
+				if(currentAuthor != update.Update.AuthorName || update.Update.Text.Length == 0)
+					if(currentBuffer.Length > 0)
+						logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.Update.AuthorName, currentBuffer);
+				currentAuthor = update.Update.AuthorName;
+				currentBuffer += update.Update.Text;
+			}
 			else if (evt is WorkflowOutputEvent output)
 			{
 				// Workflow completed
