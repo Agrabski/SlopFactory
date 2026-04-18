@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
+using System.ClientModel.Primitives;
 
 namespace SlopFactory.Services;
 
@@ -41,7 +42,15 @@ public class ChatClientFactory : IChatClientFactory
 			new OpenAIClientOptions
 			{
 				Endpoint = NormalizeOllamaEndpoint(options.OllamaUrl),
-				NetworkTimeout = TimeSpan.FromMinutes(30)
+				NetworkTimeout = TimeSpan.FromMinutes(30),
+				ClientLoggingOptions = new ClientLoggingOptions()
+				{
+					EnableLogging = true,
+					EnableMessageContentLogging = true,
+					EnableMessageLogging = true,
+					LoggerFactory = _loggerFactory
+				},
+				EnableDistributedTracing = true,
 			}
 		);
 
@@ -63,7 +72,7 @@ public class ChatClientFactory : IChatClientFactory
 			"ToolUser",
 			"Uses repository tools to apply edits and create commits as instructed.",
 			toolUserInstructions,
-			ChatToolMode.RequireAny
+			ChatToolMode.Auto
 		);
 
 		// Note: the system that orchestrates multi-agent workflows may expect a single AIAgent or a Workflow.
@@ -73,7 +82,7 @@ public class ChatClientFactory : IChatClientFactory
 
 		return AgentWorkflowBuilder.CreateGroupChatBuilderWith(agents => new RoundRobinGroupChatManager(agents)
 				{
-					MaximumIterationCount = 30
+					MaximumIterationCount = 30,
 				}
 			)
 			.AddParticipants([analyzerAgent, coderAgent, toolUserAgent])
@@ -104,7 +113,6 @@ public class ChatClientFactory : IChatClientFactory
 				AllowMultipleToolCalls = true,
 				Reasoning = new()
 				{
-					Effort = ReasoningEffort.ExtraHigh,
 					Output = ReasoningOutput.Full,
 				},
 				ToolMode = toolMode ?? ChatToolMode.Auto,
