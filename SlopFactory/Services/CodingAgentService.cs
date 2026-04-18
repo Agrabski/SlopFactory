@@ -37,7 +37,7 @@ public class CodingAgentService(
 		tools.Add(AIFunctionFactory.Create(AskIssueQuestion));
 
 		var instructions = string.IsNullOrWhiteSpace(serviceOptions.AgentInstructions)
-			? "You are an autonomous coding agent. Complete the task using tools, and ask clarifying questions when blocked."
+			? "You are an autonomous coding agent with expert coding skills. You will be presented with a task, solve it using available tools. You are working on a android flutter project. Install the necessary tools using Shell tools"
 			: serviceOptions.AgentInstructions;
 
 		AIAgent agent;
@@ -91,14 +91,20 @@ public class CodingAgentService(
 		string relativeIssueDirectory)
 	{
 		return $"""
-			You are working on GitHub issue #{issue.Number} in repository {repoContext.Owner}/{repoContext.Repo}.
+			TASK:
+			{issue.Title}
+			{issue.Body ?? "(no description provided)"}
+			If you ask what the task is, you are failing.
+			Start implementing immediately.
+			First step:
+			Look for the relevant files in the repository.
 
-			Context:
+			CONTEXT:
 			- Repository root: {repoContext.RepoPath}
 			- Working notes directory: {relativeIssueDirectory}
 			- Preferred branch: {branchName}
 
-			Important:
+			RULES:
 			- Implement the required changes in the repository.
 			- Run relevant checks/tests.
 			- Commit changes with a clear message.
@@ -110,9 +116,7 @@ public class CodingAgentService(
 			- Make notes when you discover something useful.
 			- This message contains the issue description and context, dont ask what you should do.
 			
-			Your task that you should complete:
-			{issue.Title}
-			{issue.Body ?? "(no description provided)"}
+
 			""";
 	}
 
