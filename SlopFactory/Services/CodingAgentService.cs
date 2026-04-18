@@ -93,32 +93,26 @@ public class CodingAgentService(
 		return $"""
 			You are working on GitHub issue #{issue.Number} in repository {repoContext.Owner}/{repoContext.Repo}.
 
-			Task:
-			- Read and understand the issue.
-			- Implement the required changes in the repository.
-			- Run relevant checks/tests.
-			- Commit changes with a clear message.
-			- If useful, open a pull request.
-			
-			The issue you are tasked with:
-			
-				Issue title:
-				{issue.Title}
-				Issue body:
-				{issue.Body ?? "(no description provided)"}
-
 			Context:
 			- Repository root: {repoContext.RepoPath}
 			- Working notes directory: {relativeIssueDirectory}
 			- Preferred branch: {branchName}
 
 			Important:
-			- Use tools to discover information, only ask for clarification if absolutley necessary.
-			- Keep actions focused on this issue only.
+			- Implement the required changes in the repository.
+			- Run relevant checks/tests.
+			- Commit changes with a clear message.
+			- If useful, open a pull request.
+			- Use tools to discover information, only ask for clarification if absolutely necessary.
+			- Keep actions focused on this task only.
 			- If you need to find a specific file or piece of code, use the file tool.
 			- Dont ask any questions about the code structure, discover it yourself.
-			- Make notes when you discover something usefull.
+			- Make notes when you discover something useful.
 			- This message contains the issue description and context, dont ask what you should do.
+			
+			Your task that you should complete:
+			{issue.Title}
+			{issue.Body ?? "(no description provided)"}
 			""";
 	}
 
