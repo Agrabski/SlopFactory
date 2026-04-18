@@ -112,7 +112,10 @@ public class ChatClientFactory : IChatClientFactory
 			},
 		};
 
-		var agent = aiChatClient.AsAIAgent(agentOptions, _loggerFactory, null);
+		var agent = aiChatClient.AsAIAgent(agentOptions, _loggerFactory, null)
+			.AsBuilder()
+			.UseOpenTelemetry(sourceName:name)
+			.Build();
 		return agent;
 	}
 

@@ -1,6 +1,19 @@
+using OpenTelemetry.Trace;
 using SlopFactory.Services;
 using SlopFactory.Tools;
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args) ;
+builder.Services.AddOpenTelemetry().WithTracing(t =>
+{
+	t.AddSource("*");
+	t.SetSampler(new AlwaysOnSampler());
+
+});
+builder.Logging.AddOpenTelemetry(o =>
+	{
+		o.IncludeFormattedMessage = true;
+		o.IncludeScopes = true;
+	}
+);
 
 builder.Services.AddOptions<SlopServiceOptions>()
 	.Bind(builder.Configuration.GetSection("SlopService"));
