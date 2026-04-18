@@ -12,7 +12,8 @@ public class SlopService(
 	IGitHubAppClientFactory gitHubAppClientFactory,
 	IIssueSelectionService issueSelectionService,
 	ICodingAgentService codingAgentService,
-	ILogger<SlopService> logger) : BackgroundService
+	ILogger<SlopService> logger,
+	ILoggerFactory loggerFactory) : BackgroundService
 {
 	private static readonly ActivitySource ActivitySource = new("SlopFactory");
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -139,8 +140,8 @@ public class SlopService(
 			}
 		}
 
-		var fileTool = new FileTool(repoContext);
-		var gitTool = new GitTool(repoContext, cloneToken);
+		var fileTool = new FileTool(repoContext, loggerFactory.CreateLogger<FileTool>());
+		var gitTool = new GitTool(repoContext, cloneToken, loggerFactory.CreateLogger<ShellTool>());
 		await gitTool.CreateBranch(branchName);
 
 		var metadata = new
