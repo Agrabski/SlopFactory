@@ -55,7 +55,16 @@ public class ChatClientFactory : IChatClientFactory
 		// Create three agents: analyzer, coder, and tool user
 		var analyzerAgent = CreateAgent(options, tools, aiChatClient, "slopfactory-analyzer", "Analyzer", "Analyzes requirements and produces a general plan.", analyzerInstructions);
 		var coderAgent = CreateAgent(options, tools, aiChatClient, "slopfactory-coder", "Coder", "Decides what edits to make based on the Analyzer plan.", coderInstructions);
-		var toolUserAgent = CreateAgent(options, tools, aiChatClient, "slopfactory-tooluser", "ToolUser", "Uses repository tools to apply edits and create commits as instructed.", toolUserInstructions);
+		var toolUserAgent = CreateAgent(
+			options,
+			tools,
+			aiChatClient,
+			"slopfactory-tooluser",
+			"ToolUser",
+			"Uses repository tools to apply edits and create commits as instructed.",
+			toolUserInstructions,
+			ChatToolMode.RequireAny
+		);
 
 		// Note: the system that orchestrates multi-agent workflows may expect a single AIAgent or a Workflow.
 		// Many callers use the returned AIAgent as the entrypoint; return the Analyzer as the primary representative
@@ -79,7 +88,8 @@ public class ChatClientFactory : IChatClientFactory
 		string id,
 		string name,
 		string description,
-		string instructions
+		string instructions,
+		ChatToolMode? toolMode = null
 	)
 	{
 		var agentOptions = new ChatClientAgentOptions
@@ -96,9 +106,9 @@ public class ChatClientFactory : IChatClientFactory
 				Reasoning = new()
 				{
 					Effort = ReasoningEffort.ExtraHigh,
-					Output = ReasoningOutput.Full
+					Output = ReasoningOutput.Full,
 				},
-				ToolMode = new AutoChatToolMode(),
+				ToolMode = toolMode ?? ChatToolMode.Auto,
 			},
 		};
 
