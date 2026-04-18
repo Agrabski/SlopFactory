@@ -114,6 +114,9 @@ public class CodingAgentService(
 			Important:
 			- Use tools to discover information, only ask for clarification if absolutley necessary.
 			- Keep actions focused on this issue only.
+			- If you need to find a specific file or piece of code, use the file tool.
+			- Dont ask any questions about the code structure, discover it yourself.
+			- Make notes when you discover something usefull.
 			""";
 	}
 
