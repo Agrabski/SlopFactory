@@ -2,9 +2,9 @@ using Microsoft.Extensions.AI;
 using System.ComponentModel;
 namespace SlopFactory.Tools;
 
-public class GitTool(RepoContext context, string token) : IAIToolbox
+public class GitTool(RepoContext context, string token, ILogger<ShellTool> shellLogger) : IAIToolbox
 {
-	private readonly ShellTool _shell = new(context);
+	private readonly ShellTool _shell = new(context, shellLogger);
 
 	[Description("Create and switch to a new branch in the repository.")]
 	public async Task<string> CreateBranch(

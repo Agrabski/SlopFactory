@@ -12,7 +12,8 @@ public class CodingAgentService(
 	IGithubToolFactory githubToolFactory,
 	IChatClientFactory chatClientFactory,
 	IGitHubAppClientFactory gitHubAppClientFactory,
-	ILogger<CodingAgentService> logger) : ICodingAgentService
+	ILogger<CodingAgentService> logger,
+	ILoggerFactory factory) : ICodingAgentService
 {
 	public async Task<string> ExecuteIssueTaskAsync(
 		Issue issue,
@@ -24,10 +25,10 @@ public class CodingAgentService(
 	{
 		var serviceOptions = options.CurrentValue;
 
-		var fileTool = new FileTool(repoContext);
-		var shellTool = new ShellTool(repoContext);
+		var fileTool = new FileTool(repoContext, factory.CreateLogger<FileTool>());
+		var shellTool = new ShellTool(repoContext, factory.CreateLogger<ShellTool>());
 		var gitHubTool = await githubToolFactory.CreateClient(repoContext);
-		var gitTool = new GitTool(repoContext, (await gitHubAppClientFactory.CreateClient()).Credentials.GetToken());
+		var gitTool = new GitTool(repoContext, (await gitHubAppClientFactory.CreateClient()).Credentials.GetToken(), factory.CreateLogger<ShellTool>());
 
 		List<AITool> tools = [];
 		tools.AddRange(fileTool.GetTools());
