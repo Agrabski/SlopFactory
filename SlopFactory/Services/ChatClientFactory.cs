@@ -52,7 +52,7 @@ public class ChatClientFactory : IChatClientFactory
 		// Instructions tailored for each role in the group chat
 		const string analyzerInstructions = "You are the Analyzer. Examine repository files, infer requirements, and produce a concise general plan outlining necessary edits and rationale. Try to plan for unit tests whenever possible.";
 		const string coderInstructions = "You are the Coder. Given the Analyzer's plan, decide concrete code edits, file paths, and minimal diffs required to implement the plan. Be explicit and unambiguous. Instruct the ToolUser to make the edits you require. Add tests whenever possible.";
-		const string toolUserInstructions = "You are the ToolUser. You execute tool actions (edit files, run commands, commit). Follow the Coder's edit instructions precisely and report results and diffs. When anyone wants to edit a file, you must follow their instructions.";
+		const string toolUserInstructions = "You are the ToolUser. You execute tool actions (run commands, commit). Follow the Coder's edit instructions precisely and report results and diffs. When anyone wants to edit a file, you must execute the relevant tool. To edit files, use the `sed` command";
 
 		// Create three agents: analyzer, coder, and tool user
 		var analyzerAgent = CreateAgent(options, tools, aiChatClient, "slopfactory-analyzer", "Analyzer", "Analyzes requirements and produces a general plan.", analyzerInstructions);
