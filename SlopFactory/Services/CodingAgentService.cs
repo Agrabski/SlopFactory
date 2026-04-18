@@ -102,7 +102,7 @@ public class CodingAgentService(
 			return "Question posted to issue comments.";
 		}
 	}
-	private static string BuildIssuePrompt(
+	private string BuildIssuePrompt(
 		Issue issue,
 		RepoContext repoContext,
 		string branchName,
@@ -123,8 +123,10 @@ public class CodingAgentService(
 			- Repository root: {repoContext.RepoPath}
 			- Working notes directory: {relativeIssueDirectory}
 			- Preferred branch: {branchName}
+			{options.CurrentValue.AgentInstructions}
 
 			RULES:
+			- dont use sudo, you are already an elevated user, if you need to install a package, use apt directly.
 			- Implement the required changes in the repository.
 			- Run relevant checks/tests.
 			- Commit changes with a clear message.
@@ -136,7 +138,6 @@ public class CodingAgentService(
 			- Dont ask any questions about the code structure, discover it yourself.
 			- Make notes when you discover something useful.
 			- This message contains the issue description and context, dont ask what you should do.
-
 
 			""";
 	}
