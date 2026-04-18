@@ -66,11 +66,7 @@ public class CodingAgentService(
 			{
 				// Workflow completed
 				var conversationHistory = output.As<List<ChatMessage>>();
-				foreach (var message in conversationHistory ?? [])
-				{
-					logger.LogDebug("{MessageAuthorName}: {MessageText}", message.AuthorName, message.Text);
-					result += message.Text + "\n";
-				}
+				result = (conversationHistory ?? []).Aggregate(result, (current, message) => current + (message.Text + "\n"));
 				break;
 			}
 		}
