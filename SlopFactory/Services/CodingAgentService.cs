@@ -31,7 +31,7 @@ public class CodingAgentService(
 		var gitTool = new GitTool(repoContext, (await gitHubAppClientFactory.CreateClient()).Credentials.GetToken(), factory.CreateLogger<ShellTool>());
 
 		List<AITool> tools = [];
-		tools.AddRange(fileTool.GetTools());
+		//tools.AddRange(fileTool.GetTools());
 		tools.AddRange(gitTool.GetTools());
 		tools.AddRange(shellTool.GetTools());
 		tools.AddRange(gitHubTool.GetTools());
