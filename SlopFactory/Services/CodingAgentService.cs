@@ -96,6 +96,8 @@ public class CodingAgentService(
 			{issue.Body ?? "(no description provided)"}
 			If you ask what the task is, you are failing.
 			Start implementing immediately.
+			modify the code
+			commit and push the changes to the branch {branchName}
 			First step:
 			Look for the relevant files in the repository.
 
