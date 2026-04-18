@@ -3,8 +3,7 @@ using SlopFactory.Services;
 using SlopFactory.Tools;
 var builder = WebApplication.CreateBuilder(args) ;
 
-builder.AddServiceDefaults()
-	.ConfigureOpenTelemetry();
+builder.AddServiceDefaults();
 
 builder.Services.AddOptions<SlopServiceOptions>()
 	.Bind(builder.Configuration.GetSection("SlopService"));
