@@ -19,6 +19,7 @@ public class SlopService(
 	protected override async Task ExecuteAsync(CancellationToken cancellationToken)
 	{
 		logger.LogInformation("Starting SlopService issue polling worker.");
+		SetupGitIdentity();
 
 		try
 		{
@@ -53,6 +54,23 @@ public class SlopService(
 		{
 			logger.LogInformation("Stopping SlopService issue polling worker.");
 		}
+	}
+	private void SetupGitIdentity()
+	{
+		var processInfo = new ProcessStartInfo()
+		{
+			FileName = "/bin/bash",
+			ArgumentList =
+			{
+				"-c",
+				$"git config --global user.name 'SlopFactory'&& git config --global user.email 'slop@factory.com'"
+			}
+		};
+		var process=Process.Start(processInfo);
+			process?.WaitForExit();
+			if(process?.ExitCode!=0)
+				logger.LogError("Failed to setup git identity");
+		
 	}
 
 	private async Task PollGithubAsync(CancellationToken cancellationToken)
