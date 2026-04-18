@@ -112,8 +112,7 @@ public class CodingAgentService(
 			- Preferred branch: {branchName}
 
 			Important:
-			- If information is missing or ambiguous, call AskIssueQuestion so your question is posted to the issue.
-			- Do not ask for data you can discover via tools.
+			- Use tools to discover information, only ask for clarification if absolutley necessary.
 			- Keep actions focused on this issue only.
 			""";
 	}
