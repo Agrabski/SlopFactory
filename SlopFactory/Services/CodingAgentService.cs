@@ -61,7 +61,10 @@ public class CodingAgentService(
 			{
 				if(currentAuthor != update.Update.AuthorName || update.Update.Text.Length == 0)
 					if(currentBuffer.Length > 0)
+					{
 						logger.LogDebug("[{UpdateExecutorId}]: {MessageText}", update.Update.AuthorName, currentBuffer);
+						currentBuffer = string.Empty;
+					}
 				currentAuthor = update.Update.AuthorName;
 				currentBuffer += update.Update.Text;
 			}
